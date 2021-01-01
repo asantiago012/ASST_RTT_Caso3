@@ -11,11 +11,26 @@
 
 #define PROTOCOLO_TX_NETNODES 0
 #define PROBABILIDAD_ERROR_NETNODES 0.1
+#define PROBABILIDAD_ROUTE_NETNODES 0.5
 
+#define ACCION_NADA         0
 #define ACCION_ENVIAR       1
 #define ACCION_ENVIO_OK     2
 #define ACCION_ENVIO_NOK    3
 #define ACCION_REENVIAR     4
+
+#define PROTOCOLO_TX_NOT_PROTOCOL   0
+#define PROTOCOLO_TX_STOP_AND_WAIT  1
+#define PROTOCOLO_TX_GO_BACK_N      2
+
+#define MESSAGE_KIND_FROM_SOURCE    1
+#define MESSAGE_KIND_ACK            2
+#define MESSAGE_KIND_NACK           3
+#define MESSAGE_KIND_PACKET         4
+#define MESSAGE_KIND_CORRUPTED      5
+
+#define GATE_INDEX_1    0
+#define GATE_INDEX_2    1
 
 
 #endif /* NETWORKDEFINES_H_ */
