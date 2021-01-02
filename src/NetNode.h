@@ -11,6 +11,7 @@
 #include <omnetpp.h>
 #include "NetworkDefines.h"
 #include <stdio.h>
+#include <string.h>
 
 using namespace omnetpp;
 using namespace std;

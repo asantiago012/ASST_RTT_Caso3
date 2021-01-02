@@ -79,7 +79,10 @@ Define_Module(NetNode);
     void NetNode::deleteMessageFromStartOfQueue()
     {
         //Elimina el primer mensaje de la cola
-        messageQueue.erase(messageQueue.begin());
+        if (messageQueue.size() > 0)
+        {
+            messageQueue.erase(messageQueue.begin());
+        }
     }
 
     int NetNode::sendMessageNotProtocol(int action)
@@ -104,7 +107,7 @@ Define_Module(NetNode);
                     {
                         (*msg).setKind(MESSAGE_KIND_CORRUPTED);
                     }
-                    send(msg, "out", GATE_INDEX_1);
+                    send(msg, "outFordward", GATE_INDEX_1);
                     setindexLastGateTx(GATE_INDEX_1);
                 }
                 else
@@ -113,14 +116,14 @@ Define_Module(NetNode);
                     {
                         (*msg).setKind(MESSAGE_KIND_CORRUPTED);
                     }
-                    send(msg, "out", GATE_INDEX_2);
+                    send(msg, "outFordward", GATE_INDEX_2);
                     setindexLastGateTx(GATE_INDEX_2);
                 }
             }
             else
             {
                 //Resend packet
-                send(msg, "out", getindexLastGateTx());
+                send(msg, "outFordward", getindexLastGateTx());
             }
         }
 
@@ -275,7 +278,9 @@ Define_Module(NetNode);
                    EV << "ERROR: sendMessageNotProtocol() \n";
                    return rc;
                }
-                break;
+               deleteMessageFromStartOfQueue();
+               setindexLastGateTx(-1);
+               break;
         }
 
         return rc;
@@ -331,15 +336,8 @@ Define_Module(NetNode);
         setpRoute(PROBABILIDAD_ROUTE_NETNODES);
         setindexLastGateTx(-1);
 
-        if (par("sendInitialMessage").boolValue())
-        {
-            //Mensaje inicial en fuente para pruebas
-            cMessage *msg = new cMessage("initialMSG");
-            //scheduleAt(simTime() + TIEMPO_ENTRE_SERVICIOS, msg);
-            putMessageAtEndOfQueue(msg);
-        }
 
-        cMessage *msg_service = new cMessage("serviceTime");
+        cMessage *msg_service = new cMessage(DESCRIPCION_MSG_SERVICETIME);
         scheduleAt(simTime() + TIEMPO_ENTRE_SERVICIOS, msg_service);
     }
 
