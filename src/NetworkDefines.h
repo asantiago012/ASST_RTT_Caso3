@@ -32,5 +32,7 @@
 #define GATE_INDEX_1    0
 #define GATE_INDEX_2    1
 
+#define TIEMPO_ENTRE_SERVICIOS 1
+
 
 #endif /* NETWORKDEFINES_H_ */

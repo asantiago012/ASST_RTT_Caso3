@@ -31,18 +31,21 @@ class NetNode: public cSimpleModule {
         float getpRoute();
         void setpRoute(float probability);
 
+        int getindexLastGateTx();
+        void setindexLastGateTx(int index);
+
         void putMessageAtEndOfQueue(cMessage *msg);
         int getMessageFromStartOfQueue(cMessage *msg);
         void deleteMessageFromStartOfQueue();
 
-        int sendMessageNotProtocol(cMessage *msg, int action);
+        int sendMessageNotProtocol(int action);
         int processMessageNotProtocol(cMessage *msg, int *action);
-        int sendMessageStopAndWait(cMessage *msg, int action);
+        int sendMessageStopAndWait(int action);
         int processMessageStopAndWait(cMessage *msg, int *action);
-        int sendMessageGoBackN(cMessage *msg, int action);
+        int sendMessageGoBackN(int action);
         int processMessageGoBackN(cMessage *msg, int *action);
 
-        int sendMessage(cMessage *msg, int protocolType, int action);
+        int sendMessage(int protocolType, int action);
         int processMessage(cMessage *msg, int protocolType, int *action);
 
     protected:
@@ -53,6 +56,7 @@ class NetNode: public cSimpleModule {
         float pError;       // 0-1
         float pRoute;       // 0-1
         vector<cMessage> messageQueue;
+        int indexLastGateTx;
 };
 
 } /* namespace asst_rtt_caso3 */

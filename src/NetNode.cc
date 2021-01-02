@@ -50,10 +50,17 @@ Define_Module(NetNode);
         pRoute = probability;
      }
 
+    int NetNode::getindexLastGateTx(){
+        return indexLastGateTx;
+    }
+    void NetNode::setindexLastGateTx(int index){
+        indexLastGateTx = index;
+    }
+
     void NetNode::putMessageAtEndOfQueue(cMessage *msg)
     {
         //Introduce mensaje al final de la cola
-        messageQueue.push_back(msg);
+        messageQueue.push_back(*msg);
     }
 
     int NetNode::getMessageFromStartOfQueue(cMessage *msg)
@@ -61,7 +68,7 @@ Define_Module(NetNode);
         //Devuelve 1 y el mensaje, si hay mensaje en la cola
         if (messageQueue.size() > 0)
         {
-            msg = messageQueue.at(0);
+            (*msg) = messageQueue.at(0);
             return 1;
         }
         else
@@ -75,7 +82,7 @@ Define_Module(NetNode);
         messageQueue.erase(messageQueue.begin());
     }
 
-    int NetNode::sendMessageNotProtocol(cMessage *msg, int action)
+    int NetNode::sendMessageNotProtocol(int action)
     {
         //Envío de mensajes sin protocolo
         int rc = 0;
@@ -85,21 +92,36 @@ Define_Module(NetNode);
         float  randomNum = ((float)rand()/RAND_MAX);
         float  randomNumError = ((float)rand()/RAND_MAX);
 
-        if(randomNum < probRoute)
+        cMessage *msg = new cMessage();
+        if(getMessageFromStartOfQueue(msg))
         {
-            if(randomNumError < probError)
+            if(getindexLastGateTx() == -1)
             {
-                (*msg).setKind(MESSAGE_KIND_CORRUPTED);
+                //New packet to send
+                if(randomNum < probRoute)
+                {
+                    if(randomNumError < probError)
+                    {
+                        (*msg).setKind(MESSAGE_KIND_CORRUPTED);
+                    }
+                    send(msg, "out", GATE_INDEX_1);
+                    setindexLastGateTx(GATE_INDEX_1);
+                }
+                else
+                {
+                    if(randomNumError < probError)
+                    {
+                        (*msg).setKind(MESSAGE_KIND_CORRUPTED);
+                    }
+                    send(msg, "out", GATE_INDEX_2);
+                    setindexLastGateTx(GATE_INDEX_2);
+                }
             }
-            send(msg, "out", GATE_INDEX_1);
-        }
-        else
-        {
-            if(randomNumError < probError)
+            else
             {
-                (*msg).setKind(MESSAGE_KIND_CORRUPTED);
+                //Resend packet
+                send(msg, "out", getindexLastGateTx());
             }
-            send(msg, "out", GATE_INDEX_2);
         }
 
 
@@ -109,27 +131,34 @@ Define_Module(NetNode);
     {
         //Procesamiento de mensajes recibidos sin protocolo
         int rc = 0;
+        (*action) = ACCION_NADA;
 
         int messageKind = (*msg).getKind(); //necesario setKind(kindValue) en generacion
         switch(messageKind)
         {
             case MESSAGE_KIND_FROM_SOURCE:
                 EV << "Message type: "+to_string((*msg).getKind())+" [src packet] \n";
+                (*action) = ACCION_ENVIAR;
                 break;
             case MESSAGE_KIND_ACK:
                 EV << "Message type: "+to_string((*msg).getKind())+" [ACK] \n";
+                (*action) = ACCION_ENVIO_OK;
                 break;
             case MESSAGE_KIND_NACK:
                 EV << "Message type: "+to_string((*msg).getKind())+" [NACK] \n";
+                (*action) = ACCION_ENVIO_NOK;
                 break;
             case MESSAGE_KIND_PACKET:
                 EV << "Message type: "+to_string((*msg).getKind())+" [fwd packet] \n";
+                (*action) = ACCION_ENVIAR;
                 break;
             case MESSAGE_KIND_CORRUPTED:
                 EV << "Message type: "+to_string((*msg).getKind())+" [err packet] \n";
+                (*action) = ACCION_ENVIO_NOK;
                 break;
             default:
                 EV << "Message type: "+to_string((*msg).getKind())+" [default] \n";
+                (*action) = ACCION_ENVIAR;
                 break;
         }
 
@@ -137,7 +166,7 @@ Define_Module(NetNode);
         return rc;
     }
 
-    int NetNode::sendMessageStopAndWait(cMessage *msg, int action)
+    int NetNode::sendMessageStopAndWait(int action)
     {
         //Envío de mensajes con protocolo S&W
         int rc = 0;
@@ -176,7 +205,7 @@ Define_Module(NetNode);
         return rc;
     }
 
-    int NetNode::sendMessageGoBackN(cMessage *msg, int action)
+    int NetNode::sendMessageGoBackN(int action)
     {
         //Envío de mensajes con protocolo GBN
         int rc = 0;
@@ -215,7 +244,7 @@ Define_Module(NetNode);
         return rc;
     }
 
-    int NetNode::sendMessage(cMessage *msg, int protocolType, int action)
+    int NetNode::sendMessage(int protocolType, int action)
     {
         //Envío de mensajes
         int rc = 0;
@@ -223,28 +252,28 @@ Define_Module(NetNode);
         switch(protocolType)
         {
             case PROTOCOLO_TX_STOP_AND_WAIT:
-                rc = sendMessageStopAndWait(msg, action);
+                rc = sendMessageStopAndWait(action);
                 if(rc != 0)
                 {
                     EV << "ERROR: sendMessageStopAndWait() \n";
-                    return;
+                    return rc;
                 }
                 break;
             case  PROTOCOLO_TX_GO_BACK_N:
-               rc = sendMessageGoBackN(msg, action);
+               rc = sendMessageGoBackN(action);
                if(rc != 0)
                {
                    EV << "ERROR: sendMessageGoBackN() \n";
-                   return;
+                   return rc;
                }
                 break;
             case PROTOCOLO_TX_NOT_PROTOCOL:
             default:
-               rc = sendMessageNotProtocol(msg, action);
+               rc = sendMessageNotProtocol(action);
                if(rc != 0)
                {
                    EV << "ERROR: sendMessageNotProtocol() \n";
-                   return;
+                   return rc;
                }
                 break;
         }
@@ -299,39 +328,53 @@ Define_Module(NetNode);
 
         setprotocolType(PROTOCOLO_TX_NOT_PROTOCOL);
         setpError(PROBABILIDAD_ERROR_NETNODES);
+        setpRoute(PROBABILIDAD_ROUTE_NETNODES);
+        setindexLastGateTx(-1);
 
-//        if (par("sendInitialMessage").boolValue())
-//        {
-//            cMessage *msg = new cMessage("tictocMsg");
-//            send(msg, "out");
-//        }
+        if (par("sendInitialMessage").boolValue())
+        {
+            //Mensaje inicial en fuente para pruebas
+            cMessage *msg = new cMessage("initialMSG");
+            //scheduleAt(simTime() + TIEMPO_ENTRE_SERVICIOS, msg);
+            putMessageAtEndOfQueue(msg);
+        }
+
+        cMessage *msg_service = new cMessage("serviceTime");
+        scheduleAt(simTime() + TIEMPO_ENTRE_SERVICIOS, msg_service);
     }
 
     void NetNode::handleMessage(cMessage *msg)
     {
-        //Get message properties
         int rc = 0;
-        cGate *inputGate = (*msg).getArrivalGate();
-        int inputGateIndex = (*inputGate).getIndex();
 
         int protocolType = getprotocolType();
         int action = ACCION_NADA;
-
-        EV << "Message received from gate: "+to_string(inputGateIndex)+"\n";
-
         if((*msg).isSelfMessage())
         {
             //Mensajes propios
+            //Tiempos de servicio
             EV << "Message type: self-message \n";
+            action = ACCION_ENVIAR;
+            rc = sendMessage(protocolType, action);
+            if(rc != 0)
+            {
+                EV << "ERROR: sendMessage() \n";
+                return;
+            }
 
+            scheduleAt(simTime() + TIEMPO_ENTRE_SERVICIOS, msg); //siguiente tiempo de servicio
             //Comprobar si hay conflicto entre SelfMessage y FromSource cuando Sea SrcNetNode
 
-            //Ejemplo: timers
-            //action = ACCION_REENVIAR;
         }
         else
         {
+            //Get message properties
+            cGate *inputGate = (*msg).getArrivalGate();
+            int inputGateIndex = (*inputGate).getIndex();
+            EV << "Message received from gate: "+to_string(inputGateIndex)+"\n";
+
             //Mensajes ajenos
+            //Interaccion con otros nodos: poner/quitar cola
             rc = processMessage(msg, protocolType, &action);
             if(rc != 0)
             {
@@ -342,25 +385,14 @@ Define_Module(NetNode);
             switch(action)
             {
                 case ACCION_ENVIAR:
-                    rc = sendMessage(msg, protocolType, action);
-                    if(rc != 0)
-                    {
-                        EV << "ERROR: sendMessage() \n";
-                        return;
-                    }
+                    putMessageAtEndOfQueue(msg);
                     break;
                 case ACCION_ENVIO_OK:
                     deleteMessageFromStartOfQueue();
+                    setindexLastGateTx(-1);
                     break;
                 case ACCION_ENVIO_NOK:
                 case ACCION_REENVIAR:
-                    rc = sendMessage(msg, protocolType, action);
-                    if(rc != 0)
-                    {
-                        EV << "ERROR: sendMessage() \n";
-                        return;
-                    }
-                    break;
                 case ACCION_NADA:
                 default:
                     break;
@@ -369,8 +401,6 @@ Define_Module(NetNode);
 
         }
 
-        // just send back the message we received
-        send(msg, "out");
     }
 
 

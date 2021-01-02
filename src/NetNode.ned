@@ -10,7 +10,7 @@ package asst_rtt_caso3;
 simple NetNode
 {
     parameters:
-        //bool sendInitialMessage = default(false);
+        bool sendInitialMessage = default(false);
     gates:
         input in[];
         output out[];

@@ -15,11 +15,20 @@ import asst_rtt_caso3.NetNode;
 network RTT_CASO3_NET
 {
     submodules:
-        tic: NetNode;
-        toc: NetNode {
-            @display("p=121,61");
+        src: NetNode {
+            //@display("i=block/source,red");
+            @display("i=device/router,red;p=48,130");
+        }
+        node1: NetNode {
+            @display("i=device/router,blue;p=136,62");
+        }
+        node2: NetNode {
+            @display("i=device/router,blue;p=136,222");
         }
     connections:
-        tic.out++ --> {  delay = 100ms; } --> toc.in++;
-        tic.in++ <-- {  delay = 100ms; } <-- toc.out++;
+        src.out++ --> {  delay = 100ms; } --> node1.in++;
+        src.in++ <-- {  delay = 100ms; } <-- node1.out++;
+
+        src.out++ --> {  delay = 100ms; } --> node2.in++;
+        src.in++ <-- {  delay = 100ms; } <-- node2.out++;
 }
