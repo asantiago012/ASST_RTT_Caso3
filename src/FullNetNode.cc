@@ -49,7 +49,7 @@ Define_Module(FullNetNode);
         if (par("isSource").boolValue())
         {
             cMessage *msg = new cMessage(DESCRIPCION_MSG_ARRIVALTIME);
-            scheduleAt(simTime() + TIEMPO_ENTRE_LLEGADAS, msg);
+            scheduleAt(simTime() + exponential(TIEMPO_MEDIO_ENTRE_LLEGADAS), msg);
             setisSource(1);
         }
 
@@ -57,6 +57,13 @@ Define_Module(FullNetNode);
         {
             setisSink(1);
         }
+
+        if (par("lambda_mean").doubleValue())
+        {
+            setisSink(1);
+        }
+
+        //mu_mean
     }
 
     void FullNetNode::handleMessage(cMessage *msg)
@@ -70,7 +77,7 @@ Define_Module(FullNetNode);
             cMessage *msg_packet = new cMessage(DESCRIPCION_MSG_PACKET);
             putMessageAtEndOfQueue(msg_packet);
 
-            scheduleAt(simTime() + TIEMPO_ENTRE_LLEGADAS, msg); //siguiente llegada
+            scheduleAt(simTime() + exponential(TIEMPO_MEDIO_ENTRE_LLEGADAS), msg); //siguiente llegada
         }
         else if(getisSink() && (*msg).isSelfMessage()==false)
         {

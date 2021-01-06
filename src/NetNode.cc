@@ -338,7 +338,7 @@ Define_Module(NetNode);
 
 
         cMessage *msg_service = new cMessage(DESCRIPCION_MSG_SERVICETIME);
-        scheduleAt(simTime() + TIEMPO_ENTRE_SERVICIOS, msg_service);
+        scheduleAt(simTime() + exponential(TIEMPO_MEDIO_ENTRE_SERVICIOS), msg_service);
     }
 
     void NetNode::handleMessage(cMessage *msg)
@@ -360,7 +360,7 @@ Define_Module(NetNode);
                 return;
             }
 
-            scheduleAt(simTime() + TIEMPO_ENTRE_SERVICIOS, msg); //siguiente tiempo de servicio
+            scheduleAt(simTime() + exponential(TIEMPO_MEDIO_ENTRE_SERVICIOS), msg); //siguiente tiempo de servicio
             //Comprobar si hay conflicto entre SelfMessage y FromSource cuando Sea SrcNetNode
 
         }

@@ -58,6 +58,8 @@ class NetNode: public cSimpleModule {
         float pRoute;       // 0-1
         vector<cMessage> messageQueue;
         int indexLastGateTx;
+        cExponential arrivalTimes;
+        cExponential serviceTimes;
 };
 
 } /* namespace asst_rtt_caso3 */

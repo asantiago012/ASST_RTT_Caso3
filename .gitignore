@@ -35,3 +35,4 @@
 out/
 src/core
 src/*_dbg
+simulations/results/
