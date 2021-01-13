@@ -30,6 +30,7 @@ class FullNetNode: public NetNode {
         int isSource;
         int isSink;
 
+
 };
 
 } /* namespace asst_rtt_caso3 */

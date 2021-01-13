@@ -49,21 +49,21 @@ network RTT_CASO3_NET
         src2.outFordward++ --> {  delay = 100ms; } --> snk4.inBack++;
         src2.inFordward++ <-- {  delay = 100ms; } <-- snk4.outBack++;
 
-      	//CX: 5-3
-        src5.outFordward++ --> {  delay = 100ms; } --> snk3.inBack++;
-        src5.inFordward++ <-- {  delay = 100ms; } <-- snk3.outBack++;
+      	//CX: 5-2
+        src5.outFordward++ --> {  delay = 100ms; } --> src2.inBack++;
+        src5.inFordward++ <-- {  delay = 100ms; } <-- src2.outBack++;
         
         //CX: 5-4
         src5.outFordward++ --> {  delay = 100ms; } --> snk4.inBack++;
         src5.inFordward++ <-- {  delay = 100ms; } <-- snk4.outBack++;
         
         //CX: aux 3-4 (para pruebas y que no casque)
-        snk3.outFordward++ --> {  delay = 100ms; } --> snk4.inBack++;
-        snk3.inFordward++ <-- {  delay = 100ms; } <-- snk4.outBack++;
-        snk3.outFordward++ --> {  delay = 100ms; } --> snk4.inBack++;
-        snk3.inFordward++ <-- {  delay = 100ms; } <-- snk4.outBack++;
-        snk4.outFordward++ --> {  delay = 100ms; } --> snk3.inBack++;
-        snk4.inFordward++ <-- {  delay = 100ms; } <-- snk3.outBack++;
-        snk4.outFordward++ --> {  delay = 100ms; } --> snk3.inBack++;
-        snk4.inFordward++ <-- {  delay = 100ms; } <-- snk3.outBack++;
+//        snk3.outFordward++ --> {  delay = 100ms; } --> snk4.inBack++;
+//        snk3.inFordward++ <-- {  delay = 100ms; } <-- snk4.outBack++;
+//        snk3.outFordward++ --> {  delay = 100ms; } --> snk4.inBack++;
+//        snk3.inFordward++ <-- {  delay = 100ms; } <-- snk4.outBack++;
+//        snk4.outFordward++ --> {  delay = 100ms; } --> snk3.inBack++;
+//        snk4.inFordward++ <-- {  delay = 100ms; } <-- snk3.outBack++;
+//        snk4.outFordward++ --> {  delay = 100ms; } --> snk3.inBack++;
+//        snk4.inFordward++ <-- {  delay = 100ms; } <-- snk3.outBack++;
 }

@@ -14,6 +14,8 @@ simple FullNetNode
         double lambda_mean = default(1);	//si es fuente, media de tasa de llegadas
         bool   isSink = default(false);		//indica si es sumidero de paquetes (destino)
         double mu_mean = default(1);		//tasa media de servicios
+        int protocol = default(0);			//Tipo protocolo utilizado: none, S&W o GBN
+        double probRutado = default(0.5);	//Probabilidad de envio por output 1 del nodo
     gates:
         input  inBack[];
         input  inFordward[];

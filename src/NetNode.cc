@@ -50,12 +50,12 @@ Define_Module(NetNode);
         pRoute = probability;
      }
 
-    int NetNode::getindexLastGateTx(){
-        return indexLastGateTx;
-    }
-    void NetNode::setindexLastGateTx(int index){
-        indexLastGateTx = index;
-    }
+//    int NetNode::getindexLastGateTx(){
+//        return indexLastGateTx;
+//    }
+//    void NetNode::setindexLastGateTx(int index){
+//        indexLastGateTx = index;
+//    }
 
     int NetNode::getOutBack1Busy(){
         return outBack1Busy;
@@ -89,32 +89,103 @@ Define_Module(NetNode);
         outFordward2Busy = isBusy;
     }
 
-    void NetNode::putMessageAtEndOfQueue(cMessage *msg)
-    {
-        //Introduce mensaje al final de la cola
-        messageQueue.push_back(*msg);
+    float NetNode::getTiempoMedioEntreLlegadas() {
+        return tiempo_medio_entre_llegadas;
     }
 
-    int NetNode::getMessageFromStartOfQueue(cMessage *msg)
+    void NetNode::setTiempoMedioEntreLlegadas(float tiempoMedioEntreLlegadas) {
+        tiempo_medio_entre_llegadas = tiempoMedioEntreLlegadas;
+    }
+
+    float NetNode::getTiempoMedioEntreServicios() {
+        return tiempo_medio_entre_servicios;
+    }
+
+    void NetNode::setTiempoMedioEntreServicios(float tiempoMedioEntreServicios) {
+        tiempo_medio_entre_servicios = tiempoMedioEntreServicios;
+    }
+
+    void NetNode::putMessageAtEndOfQueue(cMessage *msg)
     {
-        //Devuelve 1 y el mensaje, si hay mensaje en la cola
-        if (messageQueue.size() > 0)
+        //Introduce mensaje al final de la cola correspondiente
+
+        float  probRoute = getpRoute();
+        float  probError = getpError();
+        float  randomNum = ((float)rand()/RAND_MAX);
+        float  randomNumError = ((float)rand()/RAND_MAX);
+
+        //Select output with probRoute
+        if(randomNum < probRoute)
         {
-            (*msg) = messageQueue.at(0);
-            return 1;
+            if(randomNumError < probError)
+            {
+                (*msg).setKind(MESSAGE_KIND_CORRUPTED);
+            }
+            messageQueue1.push_back(*msg);
         }
         else
         {
-            return 0;
+            if(randomNumError < probError)
+            {
+                (*msg).setKind(MESSAGE_KIND_CORRUPTED);
+            }
+            messageQueue2.push_back(*msg);
         }
+
     }
-    void NetNode::deleteMessageFromStartOfQueue()
+
+    int NetNode::getMessageFromStartOfQueue(int queue, cMessage *msg)
+    {
+
+        if(queue == GATE_INDEX_1)
+        {
+            //Devuelve 1 y el mensaje, si hay mensaje en la cola 1
+            if (messageQueue1.size() > 0)
+            {
+                (*msg) = messageQueue1.at(0);
+                return 1;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        else if(queue == GATE_INDEX_2)
+        {
+            //Devuelve 1 y el mensaje, si hay mensaje en la cola 2
+            if (messageQueue2.size() > 0)
+            {
+                (*msg) = messageQueue2.at(0);
+                return 1;
+            }
+            else
+            {
+                return 0;
+            }
+
+        }
+
+        return 0;
+    }
+    void NetNode::deleteMessageFromStartOfQueue(int queue)
     {
         //Elimina el primer mensaje de la cola
-        if (messageQueue.size() > 0)
+        if(queue == GATE_INDEX_1)
         {
-            messageQueue.erase(messageQueue.begin());
+            if (messageQueue1.size() > 0)
+            {
+                messageQueue1.erase(messageQueue1.begin());
+            }
         }
+        else if(queue == GATE_INDEX_2)
+        {
+            if (messageQueue2.size() > 0)
+            {
+                messageQueue2.erase(messageQueue2.begin());
+            }
+
+        }
+
     }
 
     int NetNode::sendMessageNotProtocol(int action)
@@ -122,43 +193,19 @@ Define_Module(NetNode);
         //Envío de mensajes sin protocolo
         int rc = 0;
 
-        float  probRoute = getpRoute();
-        float  probError = getpError();
-        float  randomNum = ((float)rand()/RAND_MAX);
-        float  randomNumError = ((float)rand()/RAND_MAX);
-
-        cMessage *msg = new cMessage();
-        if(getMessageFromStartOfQueue(msg))
+        cMessage *msg1 = new cMessage();
+        if(getMessageFromStartOfQueue(GATE_INDEX_1, msg1))
         {
-            if(getindexLastGateTx() == -1)
-            {
-                //New packet to send
-                if(randomNum < probRoute)
-                {
-                    if(randomNumError < probError)
-                    {
-                        (*msg).setKind(MESSAGE_KIND_CORRUPTED);
-                    }
-                    send(msg, "outFordward", GATE_INDEX_1);
-                    setindexLastGateTx(GATE_INDEX_1);
-                }
-                else
-                {
-                    if(randomNumError < probError)
-                    {
-                        (*msg).setKind(MESSAGE_KIND_CORRUPTED);
-                    }
-                    send(msg, "outFordward", GATE_INDEX_2);
-                    setindexLastGateTx(GATE_INDEX_2);
-                }
-            }
-            else
-            {
-                //Resend packet
-                send(msg, "outFordward", getindexLastGateTx());
-            }
+            send(msg1, "outFordward", GATE_INDEX_1);
+            deleteMessageFromStartOfQueue(GATE_INDEX_1);
         }
 
+        cMessage *msg2 = new cMessage();
+        if(getMessageFromStartOfQueue(GATE_INDEX_2, msg2))
+        {
+            send(msg2, "outFordward", GATE_INDEX_2);
+            deleteMessageFromStartOfQueue(GATE_INDEX_2);
+        }
 
         return rc;
     }
@@ -173,6 +220,7 @@ Define_Module(NetNode);
         {
             case MESSAGE_KIND_FROM_SOURCE:
                 EV << "Message type: "+to_string((*msg).getKind())+" [src packet] \n";
+                (*msg).setKind(MESSAGE_KIND_PACKET);
                 (*action) = ACCION_ENVIAR;
                 break;
             case MESSAGE_KIND_ACK:
@@ -310,8 +358,6 @@ Define_Module(NetNode);
                    EV << "ERROR: sendMessageNotProtocol() \n";
                    return rc;
                }
-               deleteMessageFromStartOfQueue();
-               setindexLastGateTx(-1);
                break;
         }
 
@@ -366,13 +412,17 @@ Define_Module(NetNode);
         setprotocolType(PROTOCOLO_TX_NOT_PROTOCOL);
         setpError(PROBABILIDAD_ERROR_NETNODES);
         setpRoute(PROBABILIDAD_ROUTE_NETNODES);
-        setindexLastGateTx(-1);
+        //setindexLastGateTx(-1);
 
         setOutBack1Busy(OUTPUT_GATE_FREE);
         setOutBack2Busy(OUTPUT_GATE_FREE);
         setOutFordward1Busy(OUTPUT_GATE_FREE);
         setOutFordward2Busy(OUTPUT_GATE_FREE);
 
+        //////////////////////////////////////////////////////////////////////////
+        //Comentado para eliminar esta funcionalidad (descomentar para aplicar)
+        //  de momento solo reacciona ante llegadas o mensajes de otros nodos
+        //////////////////////////////////////////////////////////////////////////
 
         cMessage *msg_service = new cMessage(DESCRIPCION_MSG_SERVICETIME);
         scheduleAt(simTime() + exponential(TIEMPO_MEDIO_ENTRE_SERVICIOS), msg_service);
@@ -384,7 +434,8 @@ Define_Module(NetNode);
 
         int protocolType = getprotocolType();
         int action = ACCION_NADA;
-        if((*msg).isSelfMessage())
+        string messageInfo = (*msg).getFullName();
+        if((*msg).isSelfMessage() && messageInfo.compare(DESCRIPCION_MSG_SERVICETIME)==0)
         {
             //Mensajes propios
             //Tiempos de servicio
@@ -397,7 +448,8 @@ Define_Module(NetNode);
                 return;
             }
 
-            scheduleAt(simTime() + exponential(TIEMPO_MEDIO_ENTRE_SERVICIOS), msg); //siguiente tiempo de servicio
+            cMessage *msg_service = new cMessage(DESCRIPCION_MSG_SERVICETIME);
+            scheduleAt(simTime() + exponential(getTiempoMedioEntreServicios()), msg_service); //siguiente tiempo de servicio
             //Comprobar si hay conflicto entre SelfMessage y FromSource cuando Sea SrcNetNode
 
         }
@@ -423,11 +475,12 @@ Define_Module(NetNode);
                     putMessageAtEndOfQueue(msg);
                     break;
                 case ACCION_ENVIO_OK:
-                    deleteMessageFromStartOfQueue();
-                    setindexLastGateTx(-1);
+                    deleteMessageFromStartOfQueue(inputGateIndex);
+                    //setindexLastGateTx(-1);
                     break;
                 case ACCION_ENVIO_NOK:
                 case ACCION_REENVIAR:
+                    break;
                 case ACCION_NADA:
                 default:
                     break;
@@ -441,3 +494,5 @@ Define_Module(NetNode);
 
 
 } /* namespace asst_rtt_caso3 */
+
+

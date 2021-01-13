@@ -44,26 +44,50 @@ Define_Module(FullNetNode);
     //////////////////////////////
     void FullNetNode::initialize()
     {
+        //Inicializacion de nodo por defecto
         NetNode::initialize();
 
-        if (par("isSource").boolValue())
+        //Inicializacion de tasas de llegadas y servicios
+        if (par("lambda_mean").doubleValue())
         {
-            cMessage *msg = new cMessage(DESCRIPCION_MSG_ARRIVALTIME);
-            scheduleAt(simTime() + exponential(TIEMPO_MEDIO_ENTRE_LLEGADAS), msg);
-            setisSource(1);
+            setTiempoMedioEntreLlegadas(par("lambda_mean").doubleValue());
+        }
+        else
+        {
+            setTiempoMedioEntreLlegadas(TIEMPO_MEDIO_ENTRE_LLEGADAS);
+        }
+        if (par("mu_mean").doubleValue())
+        {
+            setTiempoMedioEntreServicios(par("mu_mean").doubleValue());
+        }
+        else
+        {
+            setTiempoMedioEntreServicios(TIEMPO_MEDIO_ENTRE_SERVICIOS);
         }
 
+
+        //Inicializacion de tipo de nodo: Fuente, Sumidero, Ambas o Ninguna
+        if (par("isSource").boolValue())
+        {
+            cMessage *msg_arrival = new cMessage(DESCRIPCION_MSG_ARRIVALTIME);
+            scheduleAt(simTime() + exponential(getTiempoMedioEntreLlegadas()), msg_arrival);
+            setisSource(1);
+        }
         if (par("isSink").boolValue())
         {
             setisSink(1);
         }
 
-        if (par("lambda_mean").doubleValue())
+        //Inicializacion de parametros de nodo
+        if(par("protocol").intValue())
         {
-            setisSink(1);
+            setprotocolType(par("protocol").intValue());
+        }
+        if (par("probRutado").doubleValue())
+        {
+            setpRoute(par("probRutado").doubleValue());
         }
 
-        //mu_mean
     }
 
     void FullNetNode::handleMessage(cMessage *msg)
@@ -75,9 +99,11 @@ Define_Module(FullNetNode);
             // ... es una "llegada" generada a tx.
 
             cMessage *msg_packet = new cMessage(DESCRIPCION_MSG_PACKET);
+            (*msg_packet).setKind(MESSAGE_KIND_FROM_SOURCE);
             putMessageAtEndOfQueue(msg_packet);
 
-            scheduleAt(simTime() + exponential(TIEMPO_MEDIO_ENTRE_LLEGADAS), msg); //siguiente llegada
+            cMessage *msg_arrival = new cMessage(DESCRIPCION_MSG_ARRIVALTIME);
+            scheduleAt(simTime() + exponential(getTiempoMedioEntreLlegadas()), msg_arrival); //siguiente llegada
         }
         else if(getisSink() && (*msg).isSelfMessage()==false)
         {
@@ -88,6 +114,10 @@ Define_Module(FullNetNode);
             cGate *inputGate = (*msg).getArrivalGate();
             int inputGateIndex = (*inputGate).getIndex();
 
+            /////////////////////////////////////////////////////////
+            //Procesamiento de datos de paquete en sumidero destino
+            //  exportacion final...
+
         }
         else
         {
@@ -95,4 +125,7 @@ Define_Module(FullNetNode);
         }
 
     }
+
+
+
 } /* namespace asst_rtt_caso3 */
