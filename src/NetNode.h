@@ -35,6 +35,15 @@ class NetNode: public cSimpleModule {
         int getindexLastGateTx();
         void setindexLastGateTx(int index);
 
+        int getOutBack1Busy();
+        void setOutBack1Busy(int outBack1Busy);
+        int getOutBack2Busy();
+        void setOutBack2Busy(int outBack2Busy);
+        int getOutFordward1Busy() ;
+        void setOutFordward1Busy(int outFordward1Busy);
+        int getOutFordward2Busy();
+        void setOutFordward2Busy(int outFordward2Busy);
+
         void putMessageAtEndOfQueue(cMessage *msg);
         int getMessageFromStartOfQueue(cMessage *msg);
         void deleteMessageFromStartOfQueue();
@@ -49,6 +58,8 @@ class NetNode: public cSimpleModule {
         int sendMessage(int protocolType, int action);
         int processMessage(cMessage *msg, int protocolType, int *action);
 
+
+
     protected:
         virtual void initialize();
         virtual void handleMessage(cMessage *msg);
@@ -56,10 +67,15 @@ class NetNode: public cSimpleModule {
         int protocolType;   // 0-2
         float pError;       // 0-1
         float pRoute;       // 0-1
-        vector<cMessage> messageQueue;
+        vector<cMessage> messageQueue1;
+        vector<cMessage> messageQueue2;
         int indexLastGateTx;
-        cExponential arrivalTimes;
-        cExponential serviceTimes;
+        //cExponential arrivalTimes;
+        //cExponential serviceTimes;
+        int outBack1Busy;
+        int outBack2Busy;
+        int outFordward1Busy;
+        int outFordward2Busy;
 };
 
 } /* namespace asst_rtt_caso3 */

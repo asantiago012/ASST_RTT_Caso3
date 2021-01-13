@@ -39,5 +39,7 @@
 #define DESCRIPCION_MSG_ARRIVALTIME "arrivalTime"
 #define DESCRIPCION_MSG_PACKET      "packet"
 
+#define OUTPUT_GATE_FREE            0
+#define OUTPUT_GATE_BUSY            1
 
 #endif /* NETWORKDEFINES_H_ */

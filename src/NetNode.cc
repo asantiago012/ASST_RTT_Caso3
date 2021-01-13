@@ -57,6 +57,38 @@ Define_Module(NetNode);
         indexLastGateTx = index;
     }
 
+    int NetNode::getOutBack1Busy(){
+        return outBack1Busy;
+    }
+
+    void NetNode::setOutBack1Busy(int isBusy) {
+        outBack1Busy = isBusy;
+    }
+
+    int NetNode::getOutBack2Busy(){
+        return outBack2Busy;
+    }
+
+    void NetNode::setOutBack2Busy(int isBusy) {
+        outBack2Busy = outBack2Busy;
+    }
+
+    int NetNode::getOutFordward1Busy() {
+        return outFordward1Busy;
+    }
+
+    void NetNode::setOutFordward1Busy(int isBusy) {
+        outFordward1Busy = isBusy;
+    }
+
+    int NetNode::getOutFordward2Busy(){
+        return outFordward2Busy;
+    }
+
+    void NetNode::setOutFordward2Busy(int isBusy) {
+        outFordward2Busy = isBusy;
+    }
+
     void NetNode::putMessageAtEndOfQueue(cMessage *msg)
     {
         //Introduce mensaje al final de la cola
@@ -335,6 +367,11 @@ Define_Module(NetNode);
         setpError(PROBABILIDAD_ERROR_NETNODES);
         setpRoute(PROBABILIDAD_ROUTE_NETNODES);
         setindexLastGateTx(-1);
+
+        setOutBack1Busy(OUTPUT_GATE_FREE);
+        setOutBack2Busy(OUTPUT_GATE_FREE);
+        setOutFordward1Busy(OUTPUT_GATE_FREE);
+        setOutFordward2Busy(OUTPUT_GATE_FREE);
 
 
         cMessage *msg_service = new cMessage(DESCRIPCION_MSG_SERVICETIME);
