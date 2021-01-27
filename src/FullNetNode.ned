@@ -16,6 +16,7 @@ simple FullNetNode
         double mu_mean = default(1);		//tasa media de servicios
         int protocol = default(0);			//Tipo protocolo utilizado: none, S&W o GBN
         double probRutado = default(0.5);	//Probabilidad de envio por output 1 del nodo
+        int numPackets = default(10);		//Numero de paquetes maximo a generar en caso de fuente
     gates:
         input  inBack[];
         input  inFordward[];

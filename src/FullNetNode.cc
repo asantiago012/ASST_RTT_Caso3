@@ -88,24 +88,42 @@ Define_Module(FullNetNode);
             setpRoute(par("probRutado").doubleValue());
         }
 
+
+        //Numero de paquetes a generar
+        if(par("numPackets").intValue())
+        {
+            setNumPacketsToGenerate(par("numPackets").intValue());
+        }
+
     }
 
     void FullNetNode::handleMessage(cMessage *msg)
     {
         string messageInfo = (*msg).getFullName();
-        if(getisSource() && (*msg).isSelfMessage() && messageInfo.compare(DESCRIPCION_MSG_ARRIVALTIME)==0)
+        if(getisSource() == 1 && (*msg).isSelfMessage() && messageInfo.compare(DESCRIPCION_MSG_ARRIVALTIME)==0)
         {
             //Si es fuente y es automensaje sin ser tiempo de servicio
             // ... es una "llegada" generada a tx.
 
-            cMessage *msg_packet = new cMessage(DESCRIPCION_MSG_PACKET);
-            (*msg_packet).setKind(MESSAGE_KIND_FROM_SOURCE);
-            putMessageAtEndOfQueue(msg_packet);
+            int numPacketsRemaining = getNumPacketsToGenerate();
 
-            cMessage *msg_arrival = new cMessage(DESCRIPCION_MSG_ARRIVALTIME);
-            scheduleAt(simTime() + exponential(getTiempoMedioEntreLlegadas()), msg_arrival); //siguiente llegada
+            if(numPacketsRemaining > 0)
+            {
+                cMessage *msg_packet = new cMessage(DESCRIPCION_MSG_PACKET);
+                (*msg_packet).setKind(MESSAGE_KIND_FROM_SOURCE);
+                int queue = 0;
+                putMessageAtEndOfQueue(msg_packet, &queue);
+
+                bubble("Generated Packet");
+
+                numPacketsRemaining--;
+                setNumPacketsToGenerate(numPacketsRemaining);
+
+                cMessage *msg_arrival = new cMessage(DESCRIPCION_MSG_ARRIVALTIME);
+                scheduleAt(simTime() + exponential(getTiempoMedioEntreLlegadas()), msg_arrival); //siguiente llegada
+            }
         }
-        else if(getisSink() && (*msg).isSelfMessage()==false)
+        else if(getisSink() == 1 && (*msg).isSelfMessage()==false)
         {
             //Si es sumidero y no es automensaje
             // ... es una "llegada" a morir en este nodo
@@ -117,6 +135,7 @@ Define_Module(FullNetNode);
             /////////////////////////////////////////////////////////
             //Procesamiento de datos de paquete en sumidero destino
             //  exportacion final...
+            bubble("Deleted Packet");
 
         }
         else

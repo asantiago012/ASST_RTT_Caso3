@@ -105,7 +105,7 @@ Define_Module(NetNode);
         tiempo_medio_entre_servicios = tiempoMedioEntreServicios;
     }
 
-    void NetNode::putMessageAtEndOfQueue(cMessage *msg)
+    void NetNode::putMessageAtEndOfQueue(cMessage *msg, int *indexQueue)
     {
         //Introduce mensaje al final de la cola correspondiente
 
@@ -122,6 +122,7 @@ Define_Module(NetNode);
                 (*msg).setKind(MESSAGE_KIND_CORRUPTED);
             }
             messageQueue1.push_back(*msg);
+            (*indexQueue) = GATE_INDEX_1;
         }
         else
         {
@@ -130,7 +131,14 @@ Define_Module(NetNode);
                 (*msg).setKind(MESSAGE_KIND_CORRUPTED);
             }
             messageQueue2.push_back(*msg);
+            (*indexQueue) = GATE_INDEX_2;
         }
+
+        char charT[50];
+        memset(charT, 0 ,50);
+        sprintf(charT, "Queue1: %d\nQueue2: %d", (int)messageQueue1.size(),(int)messageQueue2.size());
+        getDisplayString().setTagArg("t", 0, charT);
+
 
     }
 
@@ -185,6 +193,11 @@ Define_Module(NetNode);
             }
 
         }
+
+        char charT[50];
+        memset(charT, 0 ,50);
+        sprintf(charT, "Queue1: %d\nQueue2: %d", (int)messageQueue1.size(),(int)messageQueue2.size());
+        getDisplayString().setTagArg("t", 0, charT);
 
     }
 
@@ -431,6 +444,7 @@ Define_Module(NetNode);
     void NetNode::handleMessage(cMessage *msg)
     {
         int rc = 0;
+        int queue = 0;
 
         int protocolType = getprotocolType();
         int action = ACCION_NADA;
@@ -472,8 +486,7 @@ Define_Module(NetNode);
             switch(action)
             {
                 case ACCION_ENVIAR:
-                    putMessageAtEndOfQueue(msg);
-                    break;
+                    putMessageAtEndOfQueue(msg, &queue);
                 case ACCION_ENVIO_OK:
                     deleteMessageFromStartOfQueue(inputGateIndex);
                     //setindexLastGateTx(-1);

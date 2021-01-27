@@ -19,18 +19,25 @@ network RTT_CASO3_NET
         src1: FullNetNode {
             //@display("i=block/source,red");
             @display("i=device/router,red;p=50,130");
+            @display("t=Queue1: 0\nQueue2: 0;tt= Node1(Source)");
         }
         src2: FullNetNode {
             @display("i=device/router,red;p=200,62");
+            @display("t=Queue1: 0\nQueue2: 0;tt=Node2(Source)");
         }
         src5: FullNetNode {
             @display("i=device/router,red;p=200,222");
+            @display("t=Queue1: 0\nQueue2: 0;tt=Node5(Source)");
         }
         snk3: FullNetNode {
             @display("i=device/router,blue;p=350,62");
+            @display("tt=Node3(Sink)");
+            //@display("t=Queue1: 0\nQueue2: 0;tt=Node3(Sink)");
         }
         snk4: FullNetNode {
             @display("i=device/router,blue;p=350,222");
+            @display("tt=Node4(Sink)");
+            //@display("t=Queue1: 0\nQueue2: 0;tt=Node4(Sink)");
         }
     connections:
         //CX: 1-2

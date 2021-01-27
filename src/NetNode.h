@@ -44,7 +44,7 @@ class NetNode: public cSimpleModule {
         int getOutFordward2Busy();
         void setOutFordward2Busy(int outFordward2Busy);
 
-        void putMessageAtEndOfQueue(cMessage *msg);
+        void putMessageAtEndOfQueue(cMessage *msg, int *indexQueue);
         int getMessageFromStartOfQueue(int queue, cMessage *msg);
         void deleteMessageFromStartOfQueue(int queue);
 
@@ -63,6 +63,14 @@ class NetNode: public cSimpleModule {
         float getTiempoMedioEntreServicios();
         void setTiempoMedioEntreServicios(float tiempoMedioEntreServicios);
 
+        int getNumPacketsToGenerate() const {
+            return numPacketsToGenerate;
+        }
+
+        void setNumPacketsToGenerate(int numPacketsToGenerate) {
+            this->numPacketsToGenerate = numPacketsToGenerate;
+        }
+
     protected:
         virtual void initialize();
         virtual void handleMessage(cMessage *msg);
@@ -70,6 +78,8 @@ class NetNode: public cSimpleModule {
         int protocolType;   // 0-2
         float pError;       // 0-1
         float pRoute;       // 0-1
+
+        int numPacketsToGenerate;
 
         vector<cMessage> messageQueue1;
         vector<cMessage> messageQueue2;
