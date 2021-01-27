@@ -10,14 +10,22 @@
 
 
 #define PROTOCOLO_TX_NETNODES 0
-#define PROBABILIDAD_ERROR_NETNODES 0.1
+#define PROBABILIDAD_ERROR_NETNODES 0.05
 #define PROBABILIDAD_ROUTE_NETNODES 0.7
 
-#define ACCION_NADA         0
-#define ACCION_ENVIAR       1
-#define ACCION_ENVIO_OK     2
-#define ACCION_ENVIO_NOK    3
-#define ACCION_REENVIAR     4
+#define ACCION_NADA             0
+#define ACCION_ENVIAR           1
+#define ACCION_ENVIO_OK         2
+#define ACCION_ENVIO_NOK        3
+#define ACCION_REENVIAR         4
+#define ACCION_ENVIAR_Q1        5
+#define ACCION_ENVIO_OK_Q1      6
+#define ACCION_ENVIO_NOK_Q1     7
+#define ACCION_REENVIAR_Q1      8
+#define ACCION_ENVIAR_Q2        9
+#define ACCION_ENVIO_OK_Q2      10
+#define ACCION_ENVIO_NOK_Q2     11
+#define ACCION_REENVIAR_Q2      12
 
 #define PROTOCOLO_TX_NOT_PROTOCOL   0
 #define PROTOCOLO_TX_STOP_AND_WAIT  1

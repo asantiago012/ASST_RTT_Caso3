@@ -132,6 +132,49 @@ Define_Module(FullNetNode);
             cGate *inputGate = (*msg).getArrivalGate();
             int inputGateIndex = (*inputGate).getIndex();
 
+
+
+            //Solo contesta con ACK o NACK
+            cMessage *ack1 = new cMessage("ACK");
+            cMessage *ack2 = new cMessage("ACK");
+            cMessage *nack1 = new cMessage("NACK");
+            cMessage *nack2 = new cMessage("NACK");
+
+            ack1->setKind(MESSAGE_KIND_ACK);
+            ack2->setKind(MESSAGE_KIND_ACK);
+            nack1->setKind(MESSAGE_KIND_NACK);
+            nack2->setKind(MESSAGE_KIND_NACK);
+
+            int messageKind = (*msg).getKind(); //necesario setKind(kindValue) en generacion
+            switch(messageKind)
+            {
+                case MESSAGE_KIND_PACKET:
+                    if(inputGateIndex == GATE_INDEX_1)
+                    {
+                        send(ack1, "outBack", GATE_INDEX_1);
+                    }
+                    else
+                    {
+                        send(ack2, "outBack", GATE_INDEX_2);
+                    }
+                    EV << "Message type: "+to_string((*msg).getKind())+" [fwd packet] \n";
+                    break;
+                case MESSAGE_KIND_CORRUPTED:
+                    if(inputGateIndex == GATE_INDEX_1)
+                    {
+                        send(nack1, "outBack", GATE_INDEX_1);
+                    }
+                    else
+                    {
+                        send(nack2, "outBack", GATE_INDEX_2);
+                    }
+                    EV << "Message type: "+to_string((*msg).getKind())+" [err packet] \n";
+                    break;
+                default:
+                    EV << "Message type: "+to_string((*msg).getKind())+" [default] \n";
+                    break;
+            }
+
             /////////////////////////////////////////////////////////
             //Procesamiento de datos de paquete en sumidero destino
             //  exportacion final...

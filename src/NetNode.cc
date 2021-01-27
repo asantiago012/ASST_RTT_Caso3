@@ -105,38 +105,38 @@ Define_Module(NetNode);
         tiempo_medio_entre_servicios = tiempoMedioEntreServicios;
     }
 
+    void NetNode::packetWithError(cMessage *msg)
+    {
+        float  probError = getpError();
+        float  randomNumError = ((float)rand()/RAND_MAX);
+
+        if(randomNumError < probError)
+        {
+            (*msg).setKind(MESSAGE_KIND_CORRUPTED);
+        }
+    }
+
     void NetNode::putMessageAtEndOfQueue(cMessage *msg, int *indexQueue)
     {
         //Introduce mensaje al final de la cola correspondiente
-
         float  probRoute = getpRoute();
-        float  probError = getpError();
         float  randomNum = ((float)rand()/RAND_MAX);
-        float  randomNumError = ((float)rand()/RAND_MAX);
 
         //Select output with probRoute
         if(randomNum < probRoute)
         {
-            if(randomNumError < probError)
-            {
-                (*msg).setKind(MESSAGE_KIND_CORRUPTED);
-            }
             messageQueue1.push_back(*msg);
             (*indexQueue) = GATE_INDEX_1;
         }
         else
         {
-            if(randomNumError < probError)
-            {
-                (*msg).setKind(MESSAGE_KIND_CORRUPTED);
-            }
             messageQueue2.push_back(*msg);
             (*indexQueue) = GATE_INDEX_2;
         }
 
         char charT[50];
         memset(charT, 0 ,50);
-        sprintf(charT, "Queue1: %d\nQueue2: %d", (int)messageQueue1.size(),(int)messageQueue2.size());
+        sprintf(charT, "Queue1: %d\nQueue2: %d\nBusyQueue1: %d\nBusyQueue2: %d", (int)messageQueue1.size(),(int)messageQueue2.size(), getOutFordward1Busy(), getOutFordward2Busy());
         getDisplayString().setTagArg("t", 0, charT);
 
 
@@ -196,7 +196,7 @@ Define_Module(NetNode);
 
         char charT[50];
         memset(charT, 0 ,50);
-        sprintf(charT, "Queue1: %d\nQueue2: %d", (int)messageQueue1.size(),(int)messageQueue2.size());
+        sprintf(charT, "Queue1: %d\nQueue2: %d\nBusyQueue1: %d\nBusyQueue2: %d", (int)messageQueue1.size(),(int)messageQueue2.size(), getOutFordward1Busy(), getOutFordward2Busy());
         getDisplayString().setTagArg("t", 0, charT);
 
     }
@@ -266,7 +266,126 @@ Define_Module(NetNode);
     {
         //Envío de mensajes con protocolo S&W
         int rc = 0;
+        cMessage *msg1 = new cMessage("PCKT");
+        cMessage *msg2 = new cMessage("PCKT");
+        cMessage *ack1 = new cMessage("ACK");
+        cMessage *ack2 = new cMessage("ACK");
+        cMessage *nack1 = new cMessage("NACK");
+        cMessage *nack2 = new cMessage("NACK");
 
+        ack1->setKind(MESSAGE_KIND_ACK);
+        ack2->setKind(MESSAGE_KIND_ACK);
+        nack1->setKind(MESSAGE_KIND_NACK);
+        nack2->setKind(MESSAGE_KIND_NACK);
+
+        switch (action)
+        {
+
+            //Envio de PACKETS desde fuentes
+            case ACCION_ENVIAR:
+                if(getMessageFromStartOfQueue(GATE_INDEX_1, msg1))
+                {
+                    if(getOutFordward1Busy() == 0)
+                    {
+                        setOutFordward1Busy(1);
+                        //msg1->setKind(MESSAGE_KIND_FROM_SOURCE);
+                        msg1->setKind(MESSAGE_KIND_PACKET);
+                        packetWithError(msg1);
+                        send(msg1, "outFordward", GATE_INDEX_1);
+                        //deleteMessageFromStartOfQueue(GATE_INDEX_1);
+                    }
+                }
+                if(getMessageFromStartOfQueue(GATE_INDEX_2, msg2))
+                {
+                    if(getOutFordward2Busy() == 0)
+                    {
+                        setOutFordward2Busy(1);
+                        //msg2->setKind(MESSAGE_KIND_FROM_SOURCE);
+                        msg2->setKind(MESSAGE_KIND_PACKET);
+                        packetWithError(msg2);
+                        send(msg2, "outFordward", GATE_INDEX_2);
+                        //deleteMessageFromStartOfQueue(GATE_INDEX_2);
+                    }
+                }
+                break;
+            case ACCION_ENVIAR_Q1:
+                if(getMessageFromStartOfQueue(GATE_INDEX_1, msg1))
+                {
+                    if(getOutFordward1Busy() == 0)
+                    {
+                        setOutFordward1Busy(1);
+                        //msg1->setKind(MESSAGE_KIND_FROM_SOURCE);
+                        msg1->setKind(MESSAGE_KIND_PACKET);
+                        packetWithError(msg1);
+                        send(msg1, "outFordward", GATE_INDEX_1);
+                        //deleteMessageFromStartOfQueue(GATE_INDEX_1);
+                    }
+                }
+                break;
+            case ACCION_ENVIAR_Q2:
+                if(getMessageFromStartOfQueue(GATE_INDEX_2, msg2))
+                {
+                    if(getOutFordward2Busy() == 0)
+                    {
+                        setOutFordward2Busy(1);
+                        //msg2->setKind(MESSAGE_KIND_FROM_SOURCE);
+                        msg2->setKind(MESSAGE_KIND_PACKET);
+                        packetWithError(msg2);
+                        send(msg2, "outFordward", GATE_INDEX_2);
+                        //deleteMessageFromStartOfQueue(GATE_INDEX_2);
+                    }
+                }
+                break;
+            //Reenvio de PACKETS (rutado)
+            case ACCION_REENVIAR_Q1:
+                if(getMessageFromStartOfQueue(GATE_INDEX_1, msg1))
+                {
+                    if(getOutFordward1Busy() == 0)
+                    {
+                        setOutFordward1Busy(1);
+                        msg1->setKind(MESSAGE_KIND_PACKET);
+                        packetWithError(msg1);
+                        send(msg1, "outFordward", GATE_INDEX_1);
+                        //deleteMessageFromStartOfQueue(GATE_INDEX_1);
+                    }
+                }
+                send(ack1, "outBack", GATE_INDEX_1);
+                break;
+            case ACCION_REENVIAR_Q2:
+                if(getMessageFromStartOfQueue(GATE_INDEX_2, msg2))
+                {
+                    if(getOutFordward2Busy() == 0)
+                    {
+                        setOutFordward2Busy(1);
+                        msg2->setKind(MESSAGE_KIND_PACKET);
+                        packetWithError(msg2);
+                        send(msg2, "outFordward", GATE_INDEX_2);
+                        //deleteMessageFromStartOfQueue(GATE_INDEX_2);
+                    }
+                }
+                send(ack2, "outBack", GATE_INDEX_2);
+                break;
+
+            //Recepcion de ACK's
+            case ACCION_ENVIO_OK_Q1:
+                deleteMessageFromStartOfQueue(GATE_INDEX_1);
+                setOutFordward1Busy(0);
+                break;
+            case ACCION_ENVIO_OK_Q2:
+                deleteMessageFromStartOfQueue(GATE_INDEX_2);
+                setOutFordward2Busy(0);
+                break;
+
+            //Envio de NACK's
+            case ACCION_ENVIO_NOK_Q1:
+                send(nack1, "outBack", GATE_INDEX_1);
+                break;
+            case ACCION_ENVIO_NOK_Q2:
+                send(nack2, "outBack", GATE_INDEX_2);
+                break;
+            default:
+                break;
+        }
 
         return rc;
     }
@@ -274,23 +393,63 @@ Define_Module(NetNode);
     {
         //Procesamiento de mensajes recibidos con protocolo S&W
         int rc = 0;
+        cGate *inputGate = (*msg).getArrivalGate();
+        int inputGateIndex = (*inputGate).getIndex();
+        int outputGateIndex = 0;
 
         int messageKind = (*msg).getKind(); //necesario setKind(kindValue) en generacion
         switch(messageKind)
         {
             case MESSAGE_KIND_FROM_SOURCE:
+                putMessageAtEndOfQueue(msg, &outputGateIndex);
+                (*action) = ACCION_ENVIAR;
                 EV << "Message type: "+to_string((*msg).getKind())+" [src packet] \n";
                 break;
             case MESSAGE_KIND_ACK:
+                if(inputGateIndex == GATE_INDEX_1)
+                {
+                    (*action) = ACCION_ENVIO_OK_Q1;
+                }
+                else
+                {
+                    (*action) = ACCION_ENVIO_OK_Q2;
+                }
                 EV << "Message type: "+to_string((*msg).getKind())+" [ACK] \n";
                 break;
             case MESSAGE_KIND_NACK:
+                if(inputGateIndex == GATE_INDEX_1)
+                {
+                    (*action) = ACCION_ENVIAR_Q1;
+                    setOutFordward1Busy(0);
+                }
+                else
+                {
+                    (*action) = ACCION_ENVIAR_Q2;
+                    setOutFordward2Busy(0);
+                }
                 EV << "Message type: "+to_string((*msg).getKind())+" [NACK] \n";
                 break;
             case MESSAGE_KIND_PACKET:
+                putMessageAtEndOfQueue(msg, &outputGateIndex);
+                if(inputGateIndex == GATE_INDEX_1)
+                {
+                    (*action) = ACCION_REENVIAR_Q1;
+                }
+                else
+                {
+                    (*action) = ACCION_REENVIAR_Q2;
+                }
                 EV << "Message type: "+to_string((*msg).getKind())+" [fwd packet] \n";
                 break;
             case MESSAGE_KIND_CORRUPTED:
+                if(inputGateIndex == GATE_INDEX_1)
+                {
+                    (*action) = ACCION_ENVIO_NOK_Q1;
+                }
+                else
+                {
+                    (*action) = ACCION_ENVIO_NOK_Q2;
+                }
                 EV << "Message type: "+to_string((*msg).getKind())+" [err packet] \n";
                 break;
             default:
@@ -411,6 +570,11 @@ Define_Module(NetNode);
                 break;
         }
 
+        char charT[50];
+        memset(charT, 0 ,50);
+        sprintf(charT, "Queue1: %d\nQueue2: %d\nBusyQueue1: %d\nBusyQueue2: %d", (int)messageQueue1.size(),(int)messageQueue2.size(), getOutFordward1Busy(), getOutFordward2Busy());
+        getDisplayString().setTagArg("t", 0, charT);
+
         return rc;
     }
 
@@ -454,12 +618,33 @@ Define_Module(NetNode);
             //Mensajes propios
             //Tiempos de servicio
             EV << "Message type: self-message \n";
-            action = ACCION_ENVIAR;
-            rc = sendMessage(protocolType, action);
-            if(rc != 0)
+            if(getprotocolType() == PROTOCOLO_TX_NOT_PROTOCOL)
             {
-                EV << "ERROR: sendMessage() \n";
-                return;
+                action = ACCION_ENVIAR;
+                rc = sendMessage(protocolType, action);
+                if(rc != 0)
+                {
+                    EV << "ERROR: sendMessage() \n";
+                    return;
+                }
+            }
+            else
+            {
+                action = ACCION_ENVIAR_Q1;
+                rc = sendMessage(protocolType, action);
+                if(rc != 0)
+                {
+                    EV << "ERROR: sendMessage() \n";
+                    return;
+                }
+
+                action = ACCION_ENVIAR_Q2;
+                rc = sendMessage(protocolType, action);
+                if(rc != 0)
+                {
+                    EV << "ERROR: sendMessage() \n";
+                    return;
+                }
             }
 
             cMessage *msg_service = new cMessage(DESCRIPCION_MSG_SERVICETIME);
@@ -474,6 +659,7 @@ Define_Module(NetNode);
             int inputGateIndex = (*inputGate).getIndex();
             EV << "Message received from gate: "+to_string(inputGateIndex)+"\n";
 
+
             //Mensajes ajenos
             //Interaccion con otros nodos: poner/quitar cola
             rc = processMessage(msg, protocolType, &action);
@@ -483,21 +669,28 @@ Define_Module(NetNode);
                 return;
             }
 
-            switch(action)
+            rc = sendMessage(protocolType, action);
+            if(rc != 0)
             {
-                case ACCION_ENVIAR:
-                    putMessageAtEndOfQueue(msg, &queue);
-                case ACCION_ENVIO_OK:
-                    deleteMessageFromStartOfQueue(inputGateIndex);
-                    //setindexLastGateTx(-1);
-                    break;
-                case ACCION_ENVIO_NOK:
-                case ACCION_REENVIAR:
-                    break;
-                case ACCION_NADA:
-                default:
-                    break;
+                EV << "ERROR: sendMessage() \n";
+                return;
             }
+
+//            switch(action)
+//            {
+//                case ACCION_ENVIAR:
+//                    putMessageAtEndOfQueue(msg, &queue);
+//                case ACCION_ENVIO_OK:
+//                    deleteMessageFromStartOfQueue(inputGateIndex);
+//                    //setindexLastGateTx(-1);
+//                    break;
+//                case ACCION_ENVIO_NOK:
+//                case ACCION_REENVIAR:
+//                    break;
+//                case ACCION_NADA:
+//                default:
+//                    break;
+//            }
 
 
         }

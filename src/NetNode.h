@@ -44,6 +44,8 @@ class NetNode: public cSimpleModule {
         int getOutFordward2Busy();
         void setOutFordward2Busy(int outFordward2Busy);
 
+        void packetWithError(cMessage *msg);
+
         void putMessageAtEndOfQueue(cMessage *msg, int *indexQueue);
         int getMessageFromStartOfQueue(int queue, cMessage *msg);
         void deleteMessageFromStartOfQueue(int queue);
