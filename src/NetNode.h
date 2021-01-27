@@ -12,6 +12,7 @@
 #include "NetworkDefines.h"
 #include <stdio.h>
 #include <string.h>
+#include "asstPacket_m.h"
 
 using namespace omnetpp;
 using namespace std;
@@ -44,21 +45,21 @@ class NetNode: public cSimpleModule {
         int getOutFordward2Busy();
         void setOutFordward2Busy(int outFordward2Busy);
 
-        void packetWithError(cMessage *msg);
+        void packetWithError(AsstPacket *msg);
 
-        void putMessageAtEndOfQueue(cMessage *msg, int *indexQueue);
-        int getMessageFromStartOfQueue(int queue, cMessage *msg);
+        void putMessageAtEndOfQueue(AsstPacket *msg, int *indexQueue);
+        int getMessageFromStartOfQueue(int queue, AsstPacket *msg);
         void deleteMessageFromStartOfQueue(int queue);
 
         int sendMessageNotProtocol(int action);
-        int processMessageNotProtocol(cMessage *msg, int *action);
+        int processMessageNotProtocol(AsstPacket *msg, int *action);
         int sendMessageStopAndWait(int action);
-        int processMessageStopAndWait(cMessage *msg, int *action);
+        int processMessageStopAndWait(AsstPacket *msg, int *action);
         int sendMessageGoBackN(int action);
-        int processMessageGoBackN(cMessage *msg, int *action);
+        int processMessageGoBackN(AsstPacket *msg, int *action);
 
         int sendMessage(int protocolType, int action);
-        int processMessage(cMessage *msg, int protocolType, int *action);
+        int processMessage(AsstPacket *msg, int protocolType, int *action);
 
         float getTiempoMedioEntreLlegadas();
         void setTiempoMedioEntreLlegadas(float tiempoMedioEntreLlegadas);
@@ -83,8 +84,8 @@ class NetNode: public cSimpleModule {
 
         int numPacketsToGenerate;
 
-        vector<cMessage> messageQueue1;
-        vector<cMessage> messageQueue2;
+        vector<AsstPacket> messageQueue1;
+        vector<AsstPacket> messageQueue2;
 
         //int indexLastGateTx;
         //cExponential arrivalTimes;

@@ -13,7 +13,8 @@ Define_Module(FullNetNode);
     //////////////////////////////
     // PUBLIC METHODS
     //////////////////////////////
-    FullNetNode::FullNetNode() {
+    FullNetNode::FullNetNode() : NetNode()
+    {
         // TODO Auto-generated constructor stub
 
     }
@@ -69,7 +70,7 @@ Define_Module(FullNetNode);
         //Inicializacion de tipo de nodo: Fuente, Sumidero, Ambas o Ninguna
         if (par("isSource").boolValue())
         {
-            cMessage *msg_arrival = new cMessage(DESCRIPCION_MSG_ARRIVALTIME);
+            AsstPacket *msg_arrival = new AsstPacket(DESCRIPCION_MSG_ARRIVALTIME);
             scheduleAt(simTime() + exponential(getTiempoMedioEntreLlegadas()), msg_arrival);
             setisSource(1);
         }
@@ -99,8 +100,10 @@ Define_Module(FullNetNode);
 
     void FullNetNode::handleMessage(cMessage *msg)
     {
-        string messageInfo = (*msg).getFullName();
-        if(getisSource() == 1 && (*msg).isSelfMessage() && messageInfo.compare(DESCRIPCION_MSG_ARRIVALTIME)==0)
+        AsstPacket *packet = check_and_cast<AsstPacket *>(msg);
+
+        string messageInfo = (*packet).getFullName();
+        if(getisSource() == 1 && (*packet).isSelfMessage() && messageInfo.compare(DESCRIPCION_MSG_ARRIVALTIME)==0)
         {
             //Si es fuente y es automensaje sin ser tiempo de servicio
             // ... es una "llegada" generada a tx.
@@ -109,8 +112,21 @@ Define_Module(FullNetNode);
 
             if(numPacketsRemaining > 0)
             {
-                cMessage *msg_packet = new cMessage(DESCRIPCION_MSG_PACKET);
+                double pckLngt = exponential(TAM_MEDIO_PAQUETES_BITS);
+                AsstPacket *msg_packet = new AsstPacket(DESCRIPCION_MSG_PACKET);
                 (*msg_packet).setKind(MESSAGE_KIND_FROM_SOURCE);
+                (*msg_packet).setNodesArraySize(PACKET_TIME_TO_LIVE);
+                (*msg_packet).setSourceTime(SIMTIME_DBL(simTime()));
+
+                int size1 = sizeof(msg_packet)*8;
+                if(size1 < pckLngt)
+                {
+                    (*msg_packet).addBitLength(pckLngt-size1);
+                }
+                int size2 = sizeof(msg_packet);
+
+
+
                 int queue = 0;
                 putMessageAtEndOfQueue(msg_packet, &queue);
 
@@ -119,33 +135,34 @@ Define_Module(FullNetNode);
                 numPacketsRemaining--;
                 setNumPacketsToGenerate(numPacketsRemaining);
 
-                cMessage *msg_arrival = new cMessage(DESCRIPCION_MSG_ARRIVALTIME);
+                AsstPacket *msg_arrival = new AsstPacket(DESCRIPCION_MSG_ARRIVALTIME);
                 scheduleAt(simTime() + exponential(getTiempoMedioEntreLlegadas()), msg_arrival); //siguiente llegada
             }
         }
-        else if(getisSink() == 1 && (*msg).isSelfMessage()==false)
+        else if(getisSink() == 1 && (*packet).isSelfMessage()==false)
         {
             //Si es sumidero y no es automensaje
             // ... es una "llegada" a morir en este nodo
+            (*packet).setSinkTime(SIMTIME_DBL(simTime()));
 
             //Get message properties
-            cGate *inputGate = (*msg).getArrivalGate();
+            cGate *inputGate = (*packet).getArrivalGate();
             int inputGateIndex = (*inputGate).getIndex();
 
 
 
             //Solo contesta con ACK o NACK
-            cMessage *ack1 = new cMessage("ACK");
-            cMessage *ack2 = new cMessage("ACK");
-            cMessage *nack1 = new cMessage("NACK");
-            cMessage *nack2 = new cMessage("NACK");
+            AsstPacket *ack1 = new AsstPacket("ACK");
+            AsstPacket *ack2 = new AsstPacket("ACK");
+            AsstPacket *nack1 = new AsstPacket("NACK");
+            AsstPacket *nack2 = new AsstPacket("NACK");
 
             ack1->setKind(MESSAGE_KIND_ACK);
             ack2->setKind(MESSAGE_KIND_ACK);
             nack1->setKind(MESSAGE_KIND_NACK);
             nack2->setKind(MESSAGE_KIND_NACK);
 
-            int messageKind = (*msg).getKind(); //necesario setKind(kindValue) en generacion
+            int messageKind = (*packet).getKind(); //necesario setKind(kindValue) en generacion
             switch(messageKind)
             {
                 case MESSAGE_KIND_PACKET:
@@ -157,7 +174,7 @@ Define_Module(FullNetNode);
                     {
                         send(ack2, "outBack", GATE_INDEX_2);
                     }
-                    EV << "Message type: "+to_string((*msg).getKind())+" [fwd packet] \n";
+                    EV << "Message type: "+to_string((*packet).getKind())+" [fwd packet] \n";
                     break;
                 case MESSAGE_KIND_CORRUPTED:
                     if(inputGateIndex == GATE_INDEX_1)
@@ -168,22 +185,30 @@ Define_Module(FullNetNode);
                     {
                         send(nack2, "outBack", GATE_INDEX_2);
                     }
-                    EV << "Message type: "+to_string((*msg).getKind())+" [err packet] \n";
+                    EV << "Message type: "+to_string((*packet).getKind())+" [err packet] \n";
                     break;
                 default:
-                    EV << "Message type: "+to_string((*msg).getKind())+" [default] \n";
+                    EV << "Message type: "+to_string((*packet).getKind())+" [default] \n";
                     break;
             }
 
             /////////////////////////////////////////////////////////
             //Procesamiento de datos de paquete en sumidero destino
             //  exportacion final...
-            bubble("Deleted Packet");
+            bubble("Packet arrived to Destination");
+
+            double srcT = (*packet).getSourceTime();
+            double snkT = (*packet).getSinkTime();
+            double timeTravelling = snkT - srcT;
+            char charB[50];
+            memset(charB, 0 ,50);
+            sprintf(charB, "Total time travelling: %0.3lf", timeTravelling);
+            bubble((const char *)charB);
 
         }
         else
         {
-            NetNode::handleMessage(msg);
+            NetNode::handleMessage(packet);
         }
 
     }

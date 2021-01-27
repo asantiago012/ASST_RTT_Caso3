@@ -15,6 +15,12 @@ import asst_rtt_caso3.FullNetNode;
 //
 network RTT_CASO3_NET
 {
+    types:
+        channel C extends ned.DatarateChannel {
+            datarate = 1Mbps;
+            delay = 100us;
+            //per = 0.1;
+        }
     submodules:
         src1: FullNetNode {
             //@display("i=block/source,red");
@@ -40,30 +46,61 @@ network RTT_CASO3_NET
             //@display("t=Queue1: 0\nQueue2: 0;tt=Node4(Sink)");
         }
     connections:
+        
+        //Real channels
         //CX: 1-2
-        src1.outFordward++ --> {  delay = 100ms; } --> src2.inBack++;
-        src1.inFordward++ <-- {  delay = 100ms; } <-- src2.outBack++;
+        src1.outFordward++ --> C --> src2.inBack++;
+        src1.inFordward++ <-- C <-- src2.outBack++;
         
         //CX: 1-5
-        src1.outFordward++ --> {  delay = 100ms; } --> src5.inBack++;
-        src1.inFordward++ <-- {  delay = 100ms; } <-- src5.outBack++;
+        src1.outFordward++ --> C --> src5.inBack++;
+        src1.inFordward++ <-- C <-- src5.outBack++;
         
         //CX: 2-3
-        src2.outFordward++ --> {  delay = 100ms; } --> snk3.inBack++;
-        src2.inFordward++ <-- {  delay = 100ms; } <-- snk3.outBack++;
+        src2.outFordward++ --> C --> snk3.inBack++;
+        src2.inFordward++ <-- C <-- snk3.outBack++;
         
         //CX: 2-4
-        src2.outFordward++ --> {  delay = 100ms; } --> snk4.inBack++;
-        src2.inFordward++ <-- {  delay = 100ms; } <-- snk4.outBack++;
+        src2.outFordward++ --> C --> snk4.inBack++;
+        src2.inFordward++ <-- C <-- snk4.outBack++;
 
       	//CX: 5-2
-        src5.outFordward++ --> {  delay = 100ms; } --> src2.inBack++;
-        src5.inFordward++ <-- {  delay = 100ms; } <-- src2.outBack++;
+        src5.outFordward++ --> C --> src2.inBack++;
+        src5.inFordward++ <-- C <-- src2.outBack++;
         
         //CX: 5-4
-        src5.outFordward++ --> {  delay = 100ms; } --> snk4.inBack++;
-        src5.inFordward++ <-- {  delay = 100ms; } <-- snk4.outBack++;
+        src5.outFordward++ --> C --> snk4.inBack++;
+        src5.inFordward++ <-- C <-- snk4.outBack++;
         
+        
+        
+//        //Ideal channels
+//        //CX: 1-2
+//        src1.outFordward++ --> {  delay = 100ms; } --> src2.inBack++;
+//        src1.inFordward++ <-- {  delay = 100ms; } <-- src2.outBack++;
+//        
+//        //CX: 1-5
+//        src1.outFordward++ --> {  delay = 100ms; } --> src5.inBack++;
+//        src1.inFordward++ <-- {  delay = 100ms; } <-- src5.outBack++;
+//        
+//        //CX: 2-3
+//        src2.outFordward++ --> {  delay = 100ms; } --> snk3.inBack++;
+//        src2.inFordward++ <-- {  delay = 100ms; } <-- snk3.outBack++;
+//        
+//        //CX: 2-4
+//        src2.outFordward++ --> {  delay = 100ms; } --> snk4.inBack++;
+//        src2.inFordward++ <-- {  delay = 100ms; } <-- snk4.outBack++;
+//
+//      	//CX: 5-2
+//        src5.outFordward++ --> {  delay = 100ms; } --> src2.inBack++;
+//        src5.inFordward++ <-- {  delay = 100ms; } <-- src2.outBack++;
+//        
+//        //CX: 5-4
+//        src5.outFordward++ --> {  delay = 100ms; } --> snk4.inBack++;
+//        src5.inFordward++ <-- {  delay = 100ms; } <-- snk4.outBack++;
+//        
+
+
         //CX: aux 3-4 (para pruebas y que no casque)
 //        snk3.outFordward++ --> {  delay = 100ms; } --> snk4.inBack++;
 //        snk3.inFordward++ <-- {  delay = 100ms; } <-- snk4.outBack++;

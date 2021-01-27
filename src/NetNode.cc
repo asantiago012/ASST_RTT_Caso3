@@ -15,7 +15,7 @@ Define_Module(NetNode);
     //////////////////////////////
     // PUBLIC METHODS
     //////////////////////////////
-    NetNode::NetNode()
+    NetNode::NetNode() : cSimpleModule()
     {
         // TODO Auto-generated constructor stub
 
@@ -105,7 +105,7 @@ Define_Module(NetNode);
         tiempo_medio_entre_servicios = tiempoMedioEntreServicios;
     }
 
-    void NetNode::packetWithError(cMessage *msg)
+    void NetNode::packetWithError(AsstPacket *msg)
     {
         float  probError = getpError();
         float  randomNumError = ((float)rand()/RAND_MAX);
@@ -116,7 +116,7 @@ Define_Module(NetNode);
         }
     }
 
-    void NetNode::putMessageAtEndOfQueue(cMessage *msg, int *indexQueue)
+    void NetNode::putMessageAtEndOfQueue(AsstPacket *msg, int *indexQueue)
     {
         //Introduce mensaje al final de la cola correspondiente
         float  probRoute = getpRoute();
@@ -142,7 +142,7 @@ Define_Module(NetNode);
 
     }
 
-    int NetNode::getMessageFromStartOfQueue(int queue, cMessage *msg)
+    int NetNode::getMessageFromStartOfQueue(int queue, AsstPacket *msg)
     {
 
         if(queue == GATE_INDEX_1)
@@ -206,14 +206,14 @@ Define_Module(NetNode);
         //Envío de mensajes sin protocolo
         int rc = 0;
 
-        cMessage *msg1 = new cMessage();
+        AsstPacket *msg1 = new AsstPacket();
         if(getMessageFromStartOfQueue(GATE_INDEX_1, msg1))
         {
             send(msg1, "outFordward", GATE_INDEX_1);
             deleteMessageFromStartOfQueue(GATE_INDEX_1);
         }
 
-        cMessage *msg2 = new cMessage();
+        AsstPacket *msg2 = new AsstPacket();
         if(getMessageFromStartOfQueue(GATE_INDEX_2, msg2))
         {
             send(msg2, "outFordward", GATE_INDEX_2);
@@ -222,7 +222,7 @@ Define_Module(NetNode);
 
         return rc;
     }
-    int NetNode::processMessageNotProtocol(cMessage *msg, int *action)
+    int NetNode::processMessageNotProtocol(AsstPacket *msg, int *action)
     {
         //Procesamiento de mensajes recibidos sin protocolo
         int rc = 0;
@@ -266,12 +266,12 @@ Define_Module(NetNode);
     {
         //Envío de mensajes con protocolo S&W
         int rc = 0;
-        cMessage *msg1 = new cMessage("PCKT");
-        cMessage *msg2 = new cMessage("PCKT");
-        cMessage *ack1 = new cMessage("ACK");
-        cMessage *ack2 = new cMessage("ACK");
-        cMessage *nack1 = new cMessage("NACK");
-        cMessage *nack2 = new cMessage("NACK");
+        AsstPacket *msg1 = new AsstPacket("PCKT");
+        AsstPacket *msg2 = new AsstPacket("PCKT");
+        AsstPacket *ack1 = new AsstPacket("ACK");
+        AsstPacket *ack2 = new AsstPacket("ACK");
+        AsstPacket *nack1 = new AsstPacket("NACK");
+        AsstPacket *nack2 = new AsstPacket("NACK");
 
         ack1->setKind(MESSAGE_KIND_ACK);
         ack2->setKind(MESSAGE_KIND_ACK);
@@ -389,7 +389,7 @@ Define_Module(NetNode);
 
         return rc;
     }
-    int NetNode::processMessageStopAndWait(cMessage *msg, int *action)
+    int NetNode::processMessageStopAndWait(AsstPacket *msg, int *action)
     {
         //Procesamiento de mensajes recibidos con protocolo S&W
         int rc = 0;
@@ -468,7 +468,7 @@ Define_Module(NetNode);
 
         return rc;
     }
-    int NetNode::processMessageGoBackN(cMessage *msg, int *action)
+    int NetNode::processMessageGoBackN(AsstPacket *msg, int *action)
     {
         //Procesamiento de mensajes recibidos con protocolo GBN
         int rc = 0;
@@ -535,7 +535,7 @@ Define_Module(NetNode);
 
         return rc;
     }
-    int NetNode::processMessage(cMessage *msg, int protocolType, int *action)
+    int NetNode::processMessage(AsstPacket *msg, int protocolType, int *action)
     {
         //Procesamiento de mensajes recibidos
         int rc = 0;
@@ -601,19 +601,20 @@ Define_Module(NetNode);
         //  de momento solo reacciona ante llegadas o mensajes de otros nodos
         //////////////////////////////////////////////////////////////////////////
 
-        cMessage *msg_service = new cMessage(DESCRIPCION_MSG_SERVICETIME);
+        AsstPacket *msg_service = new AsstPacket(DESCRIPCION_MSG_SERVICETIME);
         scheduleAt(simTime() + exponential(TIEMPO_MEDIO_ENTRE_SERVICIOS), msg_service);
     }
 
     void NetNode::handleMessage(cMessage *msg)
     {
+        AsstPacket *packet = check_and_cast<AsstPacket *>(msg);
+
         int rc = 0;
-        int queue = 0;
 
         int protocolType = getprotocolType();
         int action = ACCION_NADA;
-        string messageInfo = (*msg).getFullName();
-        if((*msg).isSelfMessage() && messageInfo.compare(DESCRIPCION_MSG_SERVICETIME)==0)
+        string messageInfo = (*packet).getFullName();
+        if((*packet).isSelfMessage() && messageInfo.compare(DESCRIPCION_MSG_SERVICETIME)==0)
         {
             //Mensajes propios
             //Tiempos de servicio
@@ -647,7 +648,7 @@ Define_Module(NetNode);
                 }
             }
 
-            cMessage *msg_service = new cMessage(DESCRIPCION_MSG_SERVICETIME);
+            AsstPacket *msg_service = new AsstPacket(DESCRIPCION_MSG_SERVICETIME);
             scheduleAt(simTime() + exponential(getTiempoMedioEntreServicios()), msg_service); //siguiente tiempo de servicio
             //Comprobar si hay conflicto entre SelfMessage y FromSource cuando Sea SrcNetNode
 
@@ -655,14 +656,14 @@ Define_Module(NetNode);
         else
         {
             //Get message properties
-            cGate *inputGate = (*msg).getArrivalGate();
+            cGate *inputGate = (*packet).getArrivalGate();
             int inputGateIndex = (*inputGate).getIndex();
             EV << "Message received from gate: "+to_string(inputGateIndex)+"\n";
 
 
             //Mensajes ajenos
             //Interaccion con otros nodos: poner/quitar cola
-            rc = processMessage(msg, protocolType, &action);
+            rc = processMessage(packet, protocolType, &action);
             if(rc != 0)
             {
                 EV << "ERROR: processMessage() \n";
