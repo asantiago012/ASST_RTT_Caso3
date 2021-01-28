@@ -185,16 +185,12 @@ AsstPacket::AsstPacket(const char *name, short kind) : ::omnetpp::cPacket(name,k
     this->numHops = 0;
     this->sourceTime = 0;
     this->sinkTime = 0;
-    nodes_arraysize = 0;
-    this->nodes = 0;
     relleno_arraysize = 0;
     this->relleno = 0;
 }
 
 AsstPacket::AsstPacket(const AsstPacket& other) : ::omnetpp::cPacket(other)
 {
-    nodes_arraysize = 0;
-    this->nodes = 0;
     relleno_arraysize = 0;
     this->relleno = 0;
     copy(other);
@@ -202,7 +198,6 @@ AsstPacket::AsstPacket(const AsstPacket& other) : ::omnetpp::cPacket(other)
 
 AsstPacket::~AsstPacket()
 {
-    delete [] this->nodes;
     delete [] this->relleno;
 }
 
@@ -217,14 +212,10 @@ AsstPacket& AsstPacket::operator=(const AsstPacket& other)
 void AsstPacket::copy(const AsstPacket& other)
 {
     this->numHops = other.numHops;
-    this->source = other.source;
+    this->pcktName = other.pcktName;
     this->sourceTime = other.sourceTime;
     this->sinkTime = other.sinkTime;
-    delete [] this->nodes;
-    this->nodes = (other.nodes_arraysize==0) ? nullptr : new int[other.nodes_arraysize];
-    nodes_arraysize = other.nodes_arraysize;
-    for (unsigned int i=0; i<nodes_arraysize; i++)
-        this->nodes[i] = other.nodes[i];
+    this->pcktPath = other.pcktPath;
     delete [] this->relleno;
     this->relleno = (other.relleno_arraysize==0) ? nullptr : new char[other.relleno_arraysize];
     relleno_arraysize = other.relleno_arraysize;
@@ -236,11 +227,10 @@ void AsstPacket::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::omnetpp::cPacket::parsimPack(b);
     doParsimPacking(b,this->numHops);
-    doParsimPacking(b,this->source);
+    doParsimPacking(b,this->pcktName);
     doParsimPacking(b,this->sourceTime);
     doParsimPacking(b,this->sinkTime);
-    b->pack(nodes_arraysize);
-    doParsimArrayPacking(b,this->nodes,nodes_arraysize);
+    doParsimPacking(b,this->pcktPath);
     b->pack(relleno_arraysize);
     doParsimArrayPacking(b,this->relleno,relleno_arraysize);
 }
@@ -249,17 +239,10 @@ void AsstPacket::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::omnetpp::cPacket::parsimUnpack(b);
     doParsimUnpacking(b,this->numHops);
-    doParsimUnpacking(b,this->source);
+    doParsimUnpacking(b,this->pcktName);
     doParsimUnpacking(b,this->sourceTime);
     doParsimUnpacking(b,this->sinkTime);
-    delete [] this->nodes;
-    b->unpack(nodes_arraysize);
-    if (nodes_arraysize==0) {
-        this->nodes = 0;
-    } else {
-        this->nodes = new int[nodes_arraysize];
-        doParsimArrayUnpacking(b,this->nodes,nodes_arraysize);
-    }
+    doParsimUnpacking(b,this->pcktPath);
     delete [] this->relleno;
     b->unpack(relleno_arraysize);
     if (relleno_arraysize==0) {
@@ -280,14 +263,14 @@ void AsstPacket::setNumHops(int numHops)
     this->numHops = numHops;
 }
 
-const char * AsstPacket::getSource() const
+const char * AsstPacket::getPcktName() const
 {
-    return this->source.c_str();
+    return this->pcktName.c_str();
 }
 
-void AsstPacket::setSource(const char * source)
+void AsstPacket::setPcktName(const char * pcktName)
 {
-    this->source = source;
+    this->pcktName = pcktName;
 }
 
 double AsstPacket::getSourceTime() const
@@ -310,34 +293,14 @@ void AsstPacket::setSinkTime(double sinkTime)
     this->sinkTime = sinkTime;
 }
 
-void AsstPacket::setNodesArraySize(unsigned int size)
+const char * AsstPacket::getPcktPath() const
 {
-    int *nodes2 = (size==0) ? nullptr : new int[size];
-    unsigned int sz = nodes_arraysize < size ? nodes_arraysize : size;
-    for (unsigned int i=0; i<sz; i++)
-        nodes2[i] = this->nodes[i];
-    for (unsigned int i=sz; i<size; i++)
-        nodes2[i] = 0;
-    nodes_arraysize = size;
-    delete [] this->nodes;
-    this->nodes = nodes2;
+    return this->pcktPath.c_str();
 }
 
-unsigned int AsstPacket::getNodesArraySize() const
+void AsstPacket::setPcktPath(const char * pcktPath)
 {
-    return nodes_arraysize;
-}
-
-int AsstPacket::getNodes(unsigned int k) const
-{
-    if (k>=nodes_arraysize) throw omnetpp::cRuntimeError("Array of size %d indexed by %d", nodes_arraysize, k);
-    return this->nodes[k];
-}
-
-void AsstPacket::setNodes(unsigned int k, int nodes)
-{
-    if (k>=nodes_arraysize) throw omnetpp::cRuntimeError("Array of size %d indexed by %d", nodes_arraysize, k);
-    this->nodes[k] = nodes;
+    this->pcktPath = pcktPath;
 }
 
 void AsstPacket::setRellenoArraySize(unsigned int size)
@@ -451,7 +414,7 @@ unsigned int AsstPacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,
         FD_ISEDITABLE,
         FD_ISEDITABLE,
-        FD_ISARRAY | FD_ISEDITABLE,
+        FD_ISEDITABLE,
         FD_ISARRAY | FD_ISEDITABLE,
     };
     return (field>=0 && field<6) ? fieldTypeFlags[field] : 0;
@@ -467,10 +430,10 @@ const char *AsstPacketDescriptor::getFieldName(int field) const
     }
     static const char *fieldNames[] = {
         "numHops",
-        "source",
+        "pcktName",
         "sourceTime",
         "sinkTime",
-        "nodes",
+        "pcktPath",
         "relleno",
     };
     return (field>=0 && field<6) ? fieldNames[field] : nullptr;
@@ -481,10 +444,10 @@ int AsstPacketDescriptor::findField(const char *fieldName) const
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
     int base = basedesc ? basedesc->getFieldCount() : 0;
     if (fieldName[0]=='n' && strcmp(fieldName, "numHops")==0) return base+0;
-    if (fieldName[0]=='s' && strcmp(fieldName, "source")==0) return base+1;
+    if (fieldName[0]=='p' && strcmp(fieldName, "pcktName")==0) return base+1;
     if (fieldName[0]=='s' && strcmp(fieldName, "sourceTime")==0) return base+2;
     if (fieldName[0]=='s' && strcmp(fieldName, "sinkTime")==0) return base+3;
-    if (fieldName[0]=='n' && strcmp(fieldName, "nodes")==0) return base+4;
+    if (fieldName[0]=='p' && strcmp(fieldName, "pcktPath")==0) return base+4;
     if (fieldName[0]=='r' && strcmp(fieldName, "relleno")==0) return base+5;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
@@ -502,7 +465,7 @@ const char *AsstPacketDescriptor::getFieldTypeString(int field) const
         "string",
         "double",
         "double",
-        "int",
+        "string",
         "char",
     };
     return (field>=0 && field<6) ? fieldTypeStrings[field] : nullptr;
@@ -544,7 +507,6 @@ int AsstPacketDescriptor::getFieldArraySize(void *object, int field) const
     }
     AsstPacket *pp = (AsstPacket *)object; (void)pp;
     switch (field) {
-        case 4: return pp->getNodesArraySize();
         case 5: return pp->getRellenoArraySize();
         default: return 0;
     }
@@ -575,10 +537,10 @@ std::string AsstPacketDescriptor::getFieldValueAsString(void *object, int field,
     AsstPacket *pp = (AsstPacket *)object; (void)pp;
     switch (field) {
         case 0: return long2string(pp->getNumHops());
-        case 1: return oppstring2string(pp->getSource());
+        case 1: return oppstring2string(pp->getPcktName());
         case 2: return double2string(pp->getSourceTime());
         case 3: return double2string(pp->getSinkTime());
-        case 4: return long2string(pp->getNodes(i));
+        case 4: return oppstring2string(pp->getPcktPath());
         case 5: return long2string(pp->getRelleno(i));
         default: return "";
     }
@@ -595,10 +557,10 @@ bool AsstPacketDescriptor::setFieldValueAsString(void *object, int field, int i,
     AsstPacket *pp = (AsstPacket *)object; (void)pp;
     switch (field) {
         case 0: pp->setNumHops(string2long(value)); return true;
-        case 1: pp->setSource((value)); return true;
+        case 1: pp->setPcktName((value)); return true;
         case 2: pp->setSourceTime(string2double(value)); return true;
         case 3: pp->setSinkTime(string2double(value)); return true;
-        case 4: pp->setNodes(i,string2long(value)); return true;
+        case 4: pp->setPcktPath((value)); return true;
         case 5: pp->setRelleno(i,string2long(value)); return true;
         default: return false;
     }

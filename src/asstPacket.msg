@@ -10,9 +10,9 @@ namespace asst_rtt_caso3;
 //
 packet AsstPacket {
     int 	numHops;
-    string 	source;
+    string 	pcktName;
     double 	sourceTime;
     double 	sinkTime;
-    int 	nodes[];
+    string 	pcktPath;
     char 	relleno[]; // 1byte por char
 }

@@ -113,10 +113,15 @@ Define_Module(FullNetNode);
             if(numPacketsRemaining > 0)
             {
                 double pckLngt = exponential(TAM_MEDIO_PAQUETES_BITS);
-                AsstPacket *msg_packet = new AsstPacket(DESCRIPCION_MSG_PACKET);
+                char pckName[20];
+                memset(pckName, 0, 20);
+                sprintf(pckName, "%s_from_%s_seq_%d",DESCRIPCION_MSG_PACKET,getName(),numPacketsRemaining);
+                //AsstPacket *msg_packet = new AsstPacket(DESCRIPCION_MSG_PACKET);
+                AsstPacket *msg_packet = new AsstPacket(pckName);
                 (*msg_packet).setKind(MESSAGE_KIND_FROM_SOURCE);
-                (*msg_packet).setNodesArraySize(PACKET_TIME_TO_LIVE);
                 (*msg_packet).setSourceTime(SIMTIME_DBL(simTime()));
+                (*msg_packet).setPcktPath(getName());
+                (*msg_packet).setPcktName((const char *)pckName);
 
                 int size1 = sizeof(msg_packet)*8;
                 if(size1 < pckLngt)
@@ -144,6 +149,10 @@ Define_Module(FullNetNode);
             //Si es sumidero y no es automensaje
             // ... es una "llegada" a morir en este nodo
             (*packet).setSinkTime(SIMTIME_DBL(simTime()));
+            string pathAux = (*packet).getPcktPath();
+            string pathAuxAux = pathAux.append("-");
+            pathAuxAux.append(getName());
+            (*packet).setPcktPath(pathAuxAux.data());
 
             //Get message properties
             cGate *inputGate = (*packet).getArrivalGate();
@@ -200,10 +209,12 @@ Define_Module(FullNetNode);
             double srcT = (*packet).getSourceTime();
             double snkT = (*packet).getSinkTime();
             double timeTravelling = snkT - srcT;
-            char charB[50];
-            memset(charB, 0 ,50);
-            sprintf(charB, "Total time travelling: %0.3lf", timeTravelling);
+            char charB[100];
+            memset(charB, 0 ,100);
+            sprintf(charB, "Packet[%s] Path[%s] TotalTime[%0.3lf]\n",(*packet).getPcktName(),(*packet).getPcktPath(), timeTravelling);
+            EV << (const char *)charB;
             bubble((const char *)charB);
+
 
         }
         else

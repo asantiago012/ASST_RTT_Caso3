@@ -660,6 +660,10 @@ Define_Module(NetNode);
             int inputGateIndex = (*inputGate).getIndex();
             EV << "Message received from gate: "+to_string(inputGateIndex)+"\n";
 
+            string pathAux = (*packet).getPcktPath();
+            string pathAuxAux = pathAux.append("-");
+            pathAuxAux.append(getName());
+            (*packet).setPcktPath(pathAuxAux.data());
 
             //Mensajes ajenos
             //Interaccion con otros nodos: poner/quitar cola

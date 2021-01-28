@@ -28,10 +28,10 @@ namespace asst_rtt_caso3 {
  * packet AsstPacket
  * {
  *     int numHops;
- *     string source;
+ *     string pcktName;
  *     double sourceTime;
  *     double sinkTime;
- *     int nodes[];
+ *     string pcktPath;
  *     char relleno[]; // 1byte por char
  * }
  * </pre>
@@ -40,11 +40,10 @@ class AsstPacket : public ::omnetpp::cPacket
 {
   protected:
     int numHops;
-    ::omnetpp::opp_string source;
+    ::omnetpp::opp_string pcktName;
     double sourceTime;
     double sinkTime;
-    int *nodes; // array ptr
-    unsigned int nodes_arraysize;
+    ::omnetpp::opp_string pcktPath;
     char *relleno; // array ptr
     unsigned int relleno_arraysize;
 
@@ -67,16 +66,14 @@ class AsstPacket : public ::omnetpp::cPacket
     // field getter/setter methods
     virtual int getNumHops() const;
     virtual void setNumHops(int numHops);
-    virtual const char * getSource() const;
-    virtual void setSource(const char * source);
+    virtual const char * getPcktName() const;
+    virtual void setPcktName(const char * pcktName);
     virtual double getSourceTime() const;
     virtual void setSourceTime(double sourceTime);
     virtual double getSinkTime() const;
     virtual void setSinkTime(double sinkTime);
-    virtual void setNodesArraySize(unsigned int size);
-    virtual unsigned int getNodesArraySize() const;
-    virtual int getNodes(unsigned int k) const;
-    virtual void setNodes(unsigned int k, int nodes);
+    virtual const char * getPcktPath() const;
+    virtual void setPcktPath(const char * pcktPath);
     virtual void setRellenoArraySize(unsigned int size);
     virtual unsigned int getRellenoArraySize() const;
     virtual char getRelleno(unsigned int k) const;
