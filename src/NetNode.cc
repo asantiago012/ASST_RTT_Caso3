@@ -43,7 +43,7 @@ Define_Module(NetNode);
      }
 
     float NetNode::getpRoute(){
-        return pError;
+        return pRoute;
      }
 
     void NetNode::setpRoute(float probability){
@@ -70,7 +70,7 @@ Define_Module(NetNode);
     }
 
     void NetNode::setOutBack2Busy(int isBusy) {
-        outBack2Busy = outBack2Busy;
+        outBack2Busy = isBusy;
     }
 
     int NetNode::getOutFordward1Busy() {
